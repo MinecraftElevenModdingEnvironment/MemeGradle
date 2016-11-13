@@ -96,11 +96,6 @@ public class MemeGradlePlugin<M extends MemeExtension> implements Plugin<Project
 
 		// source compatability
 		{
-			/*
-			JavaPluginConvention javaPluginConvention = project.getConvention().findByType(JavaPluginConvention.class);
-			javaPluginConvention.setSourceCompatibility(JavaVersion.VERSION_1_8);
-			javaPluginConvention.setTargetCompatibility(JavaVersion.VERSION_1_8);
-			*/
 			@SuppressWarnings("unchecked")
 			Map<String, Object> properties = (Map<String, Object>) project.getProperties();
 			properties.put("sourceCompatability", JavaVersion.VERSION_1_8);
@@ -118,8 +113,8 @@ public class MemeGradlePlugin<M extends MemeExtension> implements Plugin<Project
 		// bintray
 		{
 			BintrayExtension bintray = project.getExtensions().getByType(BintrayExtension.class);
-			bintray.setUser("bintrayUser");
-			bintray.setKey("bintrayKey");
+			bintray.setUser(project.property("bintrayUser").toString());
+			bintray.setKey(project.property("bintrayKey").toString());
 			bintray.setDryRun(false);
 			bintray.setPublish(false);
 			PackageConfig pkg = bintray.getPkg();
