@@ -19,8 +19,6 @@ task sourcesJar(type: Jar, dependsOn: classes) {
 	from sourceSets.main.allSource
 }
 
-artifacts { sourcesJar }
-
 publishing {
 	publications {
 		memePublication(MavenPublication) {
@@ -64,19 +62,11 @@ def bumpVersionNumber(String versionPart) {
 	props.load(propsFile.newDataInputStream())
 }
 
-task bumpBuildNumber << {
-	bumpVersionNumber('BuildNumber')
-}
+task bumpBuildNumber << { bumpVersionNumber('BuildNumber') }
 build.dependsOn bumpBuildNumber
 
-task bumpRevision << {
-	bumpVersionNumber('Revision')
-}
+task bumpRevision << { bumpVersionNumber('Revision') }
 
-task bumpMinor << {
-	bumpVersionNumber('Minor')
-}
+task bumpMinor << { bumpVersionNumber('Minor') }
 
-task bumpMajor << {
-	bumpVersionNumber('Major')
-}
+task bumpMajor << { bumpVersionNumber('Major') }

@@ -2,7 +2,7 @@ package net.earthcomputer.meme.gradle;
 
 import org.gradle.api.Project;
 
-public abstract class MemeExtension {
+public class MemeExtension {
 
 	private String artifactId;
 	private String bintrayPackageName;

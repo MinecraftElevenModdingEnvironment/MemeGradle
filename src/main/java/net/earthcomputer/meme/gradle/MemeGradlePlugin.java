@@ -4,13 +4,15 @@ package net.earthcomputer.meme.gradle;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
+import java.util.Map;
 import java.util.Properties;
+
+import javax.inject.Inject;
 
 import org.gradle.api.JavaVersion;
 import org.gradle.api.Plugin;
 import org.gradle.api.Project;
 import org.gradle.api.Task;
-import org.gradle.api.plugins.JavaPluginConvention;
 import org.gradle.api.publish.PublishingExtension;
 import org.gradle.api.publish.maven.MavenPublication;
 import org.gradle.api.tasks.SourceSetContainer;
@@ -25,6 +27,7 @@ public class MemeGradlePlugin<M extends MemeExtension> implements Plugin<Project
 	private Jar sourcesJarTask;
 
 	@SuppressWarnings("unchecked")
+	@Inject
 	public MemeGradlePlugin() {
 		this((Class<M>) MemeExtension.class);
 	}
@@ -36,6 +39,7 @@ public class MemeGradlePlugin<M extends MemeExtension> implements Plugin<Project
 	@Override
 	public void apply(Project project) {
 		applyPlugins(project);
+		project.getConfigurations().create("memeConfiguration");
 		addRepositories(project);
 
 		// meme extension
@@ -53,18 +57,14 @@ public class MemeGradlePlugin<M extends MemeExtension> implements Plugin<Project
 		project.afterEvaluate(p -> afterEvaluate(p));
 
 	}
-	
-	protected void applyPlugins(Project project) {
-		project.getBuildscript().getRepositories().jcenter();
-		project.getBuildscript().getDependencies().add("classpath",
-				"com.jfrog.bintray.gradle:gradle-bintray-plugin:1.7.2");
 
+	protected void applyPlugins(Project project) {
 		project.getPluginManager().apply("java");
 		project.getPluginManager().apply("eclipse");
 		project.getPluginManager().apply("maven-publish");
 		project.getPluginManager().apply("com.jfrog.bintray");
 	}
-	
+
 	protected void addRepositories(Project project) {
 		project.getRepositories().jcenter();
 		project.getRepositories().maven(repo -> {
@@ -72,7 +72,7 @@ public class MemeGradlePlugin<M extends MemeExtension> implements Plugin<Project
 			repo.setUrl("https://dl.bintray.com/earthcomputer/meme/");
 		});
 	}
-	
+
 	protected void addTasks(Project project) {
 		// version tasks
 		project.task("bumpMajor").doFirst(task -> bumpVersion(project, "Major"));
@@ -80,29 +80,32 @@ public class MemeGradlePlugin<M extends MemeExtension> implements Plugin<Project
 		project.task("bumpRevision").doFirst(task -> bumpVersion(project, "Revision"));
 		Task bumpVersion = project.task("bumpBuildNumber").doFirst(task -> bumpVersion(project, "BuildNumber"));
 		project.getTasks().getByName("assemble").dependsOn(bumpVersion);
-		
+
 		// sources jar task
 		sourcesJarTask = project.getTasks().create("sourcesJar", Jar.class);
 		sourcesJarTask.dependsOn("classes");
 		sourcesJarTask.setClassifier("sources");
-		sourcesJarTask.from(
-				project.getExtensions().findByType(SourceSetContainer.class).getByName("main").getAllSource());
-		project.getArtifacts().add("sources", sourcesJarTask);
+		SourceSetContainer sourceSetContainer = (SourceSetContainer) project.getProperties().get("sourceSets");
+		sourcesJarTask.from(sourceSetContainer.getByName("main").getAllSource());
+		project.getArtifacts().add("memeConfiguration", sourcesJarTask);
 	}
 
 	protected void afterEvaluate(Project project) {
 		MemeExtension memeExt = getMemeExtension(project);
 		MavenPublication memePublication;
 
-		// meme configuration
-		{
-			project.getConfigurations().create("memeConfiguration");
-		}
 		// source compatability
 		{
+			/*
 			JavaPluginConvention javaPluginConvention = project.getConvention().findByType(JavaPluginConvention.class);
 			javaPluginConvention.setSourceCompatibility(JavaVersion.VERSION_1_8);
 			javaPluginConvention.setTargetCompatibility(JavaVersion.VERSION_1_8);
+			*/
+			@SuppressWarnings("unchecked")
+			Map<String, Object> properties = (Map<String, Object>) project.getProperties();
+			properties.put("sourceCompatability", JavaVersion.VERSION_1_8);
+			properties.put("targetCompatability", JavaVersion.VERSION_1_8);
+			
 		}
 		// maven publish
 		{
