@@ -74,14 +74,19 @@ public class MemeGradlePlugin<M extends MemeExtension> implements Plugin<Project
 	}
 
 	protected void addTasks(Project project) {
-		// version tasks
+		addVersionTasks(project);
+		addSourcesJarTask(project);
+	}
+
+	protected void addVersionTasks(Project project) {
 		project.task("bumpMajor").doFirst(task -> bumpVersion(project, "Major"));
 		project.task("bumpMinor").doFirst(task -> bumpVersion(project, "Minor"));
 		project.task("bumpRevision").doFirst(task -> bumpVersion(project, "Revision"));
 		Task bumpVersion = project.task("bumpBuildNumber").doFirst(task -> bumpVersion(project, "BuildNumber"));
 		project.getTasks().getByName("assemble").dependsOn(bumpVersion);
+	}
 
-		// sources jar task
+	protected void addSourcesJarTask(Project project) {
 		sourcesJarTask = project.getTasks().create("sourcesJar", Jar.class);
 		sourcesJarTask.dependsOn("classes");
 		sourcesJarTask.setClassifier("sources");
@@ -92,37 +97,38 @@ public class MemeGradlePlugin<M extends MemeExtension> implements Plugin<Project
 
 	protected void afterEvaluate(Project project) {
 		MemeExtension memeExt = getMemeExtension(project);
-		MavenPublication memePublication;
+		setSourceCompatibility(project);
+		setupMavenPublish(project, memeExt);
+		setupBintray(project, memeExt);
+	}
 
-		// source compatability
-		{
-			@SuppressWarnings("unchecked")
-			Map<String, Object> properties = (Map<String, Object>) project.getProperties();
-			properties.put("sourceCompatability", JavaVersion.VERSION_1_8);
-			properties.put("targetCompatability", JavaVersion.VERSION_1_8);
-			
-		}
-		// maven publish
-		{
-			PublishingExtension publishing = project.getExtensions().getByType(PublishingExtension.class);
-			memePublication = publishing.getPublications().create("memePublication", MavenPublication.class);
-			memePublication.setArtifactId(memeExt.getArtifactId());
-			memePublication.from(project.getComponents().getByName("java"));
-			memePublication.artifact(sourcesJarTask);
-		}
-		// bintray
-		{
-			BintrayExtension bintray = project.getExtensions().getByType(BintrayExtension.class);
-			bintray.setUser(project.property("bintrayUser").toString());
-			bintray.setKey(project.property("bintrayKey").toString());
-			bintray.setDryRun(false);
-			bintray.setPublish(false);
-			PackageConfig pkg = bintray.getPkg();
-			pkg.setRepo("meme");
-			pkg.setName(memeExt.getBintrayPackageName());
-			bintray.setConfigurations("memeConfiguration");
-			bintray.setPublications("memePublication");
-		}
+	protected void setSourceCompatibility(Project project) {
+		@SuppressWarnings("unchecked")
+		Map<String, Object> properties = (Map<String, Object>) project.getProperties();
+		properties.put("sourceCompatability", JavaVersion.VERSION_1_8);
+		properties.put("targetCompatability", JavaVersion.VERSION_1_8);
+	}
+
+	protected void setupMavenPublish(Project project, MemeExtension memeExt) {
+		PublishingExtension publishing = project.getExtensions().getByType(PublishingExtension.class);
+		MavenPublication memePublication = publishing.getPublications().create("memePublication",
+				MavenPublication.class);
+		memePublication.setArtifactId(memeExt.getArtifactId());
+		memePublication.from(project.getComponents().getByName("java"));
+		memePublication.artifact(sourcesJarTask);
+	}
+
+	protected void setupBintray(Project project, MemeExtension memeExt) {
+		BintrayExtension bintray = project.getExtensions().getByType(BintrayExtension.class);
+		bintray.setUser(project.property("bintrayUser").toString());
+		bintray.setKey(project.property("bintrayKey").toString());
+		bintray.setDryRun(false);
+		bintray.setPublish(false);
+		PackageConfig pkg = bintray.getPkg();
+		pkg.setRepo("meme");
+		pkg.setName(memeExt.getBintrayPackageName());
+		bintray.setConfigurations("memeConfiguration");
+		bintray.setPublications("memePublication");
 	}
 
 	private void bumpVersion(Project project, String versionType) {

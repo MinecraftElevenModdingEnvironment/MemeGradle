@@ -42,11 +42,16 @@ bintray {
 	}
 }
 
-repositories { jcenter() }
+repositories {
+	jcenter()
+	maven { url 'https://dl.bintray.com/earthcomputer/meme' }
+}
 
 dependencies {
 	compile gradleApi()
 	compile 'com.jfrog.bintray.gradle:gradle-bintray-plugin:1.7.2'
+	compile 'net.earthcomputer.meme:build-util:1.0.0.3'
+	compile 'net.earthcomputer.meme:diff:1.0.0.4'
 }
 
 sourceCompatibility = 1.8
