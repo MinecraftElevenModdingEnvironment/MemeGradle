@@ -1,6 +1,7 @@
 package net.earthcomputer.meme.gradle;
 
 import java.io.File;
+import java.util.Arrays;
 
 import org.gradle.api.Project;
 import org.gradle.api.Task;
@@ -8,6 +9,7 @@ import org.gradle.api.artifacts.Configuration;
 import org.gradle.api.publish.PublishingExtension;
 import org.gradle.api.publish.maven.MavenPublication;
 import org.gradle.api.tasks.Copy;
+import org.gradle.api.tasks.Delete;
 import org.gradle.api.tasks.JavaExec;
 
 import com.google.common.collect.ImmutableMap;
@@ -31,7 +33,7 @@ public class MemeGradleMemesanePlugin extends MemeGradlePlugin<MemeExtension> {
 			repo.setName("Cuchaz Custom Repository");
 			repo.setUrl("http://maven.cuchazinteractive.com");
 		});
-		project.getDependencies().add("enigmaDownload", "net.earthcomputer.meme:enigma:1.0.0.9-meme");
+		project.getDependencies().add("enigmaDownload", "net.earthcomputer.meme:enigma:1.0.0.15-meme");
 
 		super.addTasks(project);
 		Task downloadClient = project.getTasks().create("downloadClient", DownloadClient.class, task -> {
@@ -46,7 +48,13 @@ public class MemeGradleMemesanePlugin extends MemeGradlePlugin<MemeExtension> {
 			task.setServerInput(new File(project.getBuildDir(), "process/rawServer.jar"));
 			task.setOutput(new File(project.getBuildDir(), "process/obfMerged.jar"));
 		});
+		Task deleteOldEnigma = project.getTasks().create("deleteOldEnigma", Delete.class, task -> {
+			task.delete(project.fileTree(ImmutableMap.of("dir", new File(project.getBuildDir(), "process"), "excludes",
+					Arrays.asList("rawClient.jar", "rawServer.jar", "obfMerged.jar"))));
+		});
+
 		Task downloadEnigma = project.getTasks().create("downloadEnigma", Copy.class, task -> {
+			task.dependsOn(deleteOldEnigma);
 			task.from(enigmaDownloadConfig);
 			task.into(new File(project.getBuildDir(), "process"));
 		});
@@ -59,6 +67,7 @@ public class MemeGradleMemesanePlugin extends MemeGradlePlugin<MemeExtension> {
 			task.setErrorOutput(System.err);
 			task.args(new File(project.getBuildDir(), "process/obfMerged.jar"), project.file("mappings.mmap"));
 		});
+
 	}
 
 	@Override
