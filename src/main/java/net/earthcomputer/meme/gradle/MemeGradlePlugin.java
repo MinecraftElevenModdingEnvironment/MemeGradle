@@ -131,7 +131,7 @@ public class MemeGradlePlugin<M extends MemeExtension> implements Plugin<Project
 		bintray.setPublications("memePublication");
 	}
 
-	private void bumpVersion(Project project, String versionType) {
+	protected void bumpVersion(Project project, String versionType) {
 		try {
 			Properties props = new Properties();
 			File propsFile = project.file("gradle.properties");

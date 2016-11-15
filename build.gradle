@@ -45,12 +45,16 @@ bintray {
 repositories {
 	jcenter()
 	maven { url 'https://dl.bintray.com/earthcomputer/meme' }
+	maven {
+		name "Cuchaz Custom Repository"
+		url 'http://maven.cuchazinteractive.com'
+	}
 }
 
 dependencies {
 	compile gradleApi()
 	compile 'com.jfrog.bintray.gradle:gradle-bintray-plugin:1.7.2'
-	compile 'net.earthcomputer.meme:build-util:1.0.0.3'
+	compile 'net.earthcomputer.meme:build-util:1.0.0.4'
 	compile 'net.earthcomputer.meme:diff:1.0.0.4'
 }
 
