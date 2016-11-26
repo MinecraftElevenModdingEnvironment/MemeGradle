@@ -4,6 +4,7 @@ package net.earthcomputer.meme.gradle;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
+import java.lang.reflect.Array;
 import java.util.Map;
 import java.util.Properties;
 
@@ -127,8 +128,8 @@ public class MemeGradlePlugin<M extends MemeExtension> implements Plugin<Project
 		PackageConfig pkg = bintray.getPkg();
 		pkg.setRepo("meme");
 		pkg.setName(memeExt.getBintrayPackageName());
-		bintray.setConfigurations("memeConfiguration");
-		bintray.setPublications("memePublication");
+		bintray.setConfigurations(addToArray(bintray.getConfigurations(), "memeConfiguration"));
+		bintray.setPublications(addToArray(bintray.getPublications(), "memePublication"));
 	}
 
 	protected void bumpVersion(Project project, String versionType) {
@@ -147,6 +148,20 @@ public class MemeGradlePlugin<M extends MemeExtension> implements Plugin<Project
 	@SuppressWarnings("unchecked")
 	public M getMemeExtension(Project project) {
 		return (M) project.getExtensions().getByName("meme");
+	}
+
+	protected static <T> T[] addToArray(T[] array, T value) {
+		if (array == null) {
+			@SuppressWarnings("unchecked")
+			T[] newArray = (T[]) Array.newInstance(value.getClass(), 1);
+			newArray[0] = value;
+			return newArray;
+		}
+		@SuppressWarnings("unchecked")
+		T[] newArray = (T[]) Array.newInstance(array.getClass().getComponentType(), array.length + 1);
+		System.arraycopy(array, 0, newArray, 0, array.length);
+		newArray[array.length] = value;
+		return newArray;
 	}
 
 }
