@@ -2,6 +2,7 @@ package net.earthcomputer.meme.gradle;
 
 import java.io.File;
 import java.util.Arrays;
+import java.util.concurrent.Callable;
 
 import org.gradle.api.Project;
 import org.gradle.api.Task;
@@ -18,7 +19,13 @@ import net.earthcomputer.meme.gradle.tasks.DownloadClient;
 import net.earthcomputer.meme.gradle.tasks.DownloadServer;
 import net.earthcomputer.meme.gradle.tasks.MergeJars;
 
-public class MemeGradleMemesanePlugin extends MemeGradlePlugin<MemeExtension> {
+public class MemeGradleMemesanePlugin extends MemeGradlePlugin<MemesaneExtension> {
+
+	private Configuration enigmaDownloadConfig;
+
+	public MemeGradleMemesanePlugin() {
+		super(MemesaneExtension.class);
+	}
 
 	@Override
 	protected void applyPlugins(Project project) {
@@ -28,13 +35,6 @@ public class MemeGradleMemesanePlugin extends MemeGradlePlugin<MemeExtension> {
 
 	@Override
 	protected void addTasks(Project project) {
-		Configuration enigmaDownloadConfig = project.getConfigurations().create("enigmaDownload");
-		project.getRepositories().maven(repo -> {
-			repo.setName("Cuchaz Custom Repository");
-			repo.setUrl("http://maven.cuchazinteractive.com");
-		});
-		project.getDependencies().add("enigmaDownload", "net.earthcomputer.meme:enigma:1.0.0.15-meme");
-
 		super.addTasks(project);
 		Task downloadClient = project.getTasks().create("downloadClient", DownloadClient.class, task -> {
 			task.setTo(new File(project.getBuildDir(), "process/rawClient.jar"));
@@ -55,7 +55,12 @@ public class MemeGradleMemesanePlugin extends MemeGradlePlugin<MemeExtension> {
 
 		Task downloadEnigma = project.getTasks().create("downloadEnigma", Copy.class, task -> {
 			task.dependsOn(deleteOldEnigma);
-			task.from(enigmaDownloadConfig);
+			task.from(new Callable<Object>() {
+				@Override
+				public Object call() {
+					return enigmaDownloadConfig;
+				}
+			});
 			task.into(new File(project.getBuildDir(), "process"));
 		});
 		project.getTasks().create("enigma", JavaExec.class, task -> {
@@ -89,6 +94,18 @@ public class MemeGradleMemesanePlugin extends MemeGradlePlugin<MemeExtension> {
 				MavenPublication.class);
 		memePublication.setArtifactId(memeExt.getArtifactId());
 		memePublication.artifact("mappings.mmap");
+	}
+
+	@Override
+	protected void afterEvaluate(Project project) {
+		enigmaDownloadConfig = project.getConfigurations().create("enigmaDownload");
+		project.getRepositories().maven(repo -> {
+			repo.setName("Cuchaz Custom Repository");
+			repo.setUrl("http://maven.cuchazinteractive.com");
+		});
+		project.getDependencies().add("enigmaDownload",
+				"net.earthcomputer.meme:enigma-lib:" + getMemeExtension(project).getEnigmaVersion());
+		super.afterEvaluate(project);
 	}
 
 }
